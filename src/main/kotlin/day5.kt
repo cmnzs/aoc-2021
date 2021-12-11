@@ -1,20 +1,37 @@
 import java.io.File
 import kotlin.math.min
 import kotlin.math.max
+import kotlin.math.sign
 
 fun main() {
     val source = File("src/main/resources/day5.txt").readLines()
 
-    val x = source.map { parseLine(it) }.filter { it.isStraight() }
+    val straightLines = source.map { parseLine(it) }.filter { it.isStraight() }
 
     val g = Grid()
 
-    x.forEach { line ->
+    straightLines.forEach { line ->
         g.fill(line)
     }
-//    g.print()
 
-    print("Part1: ${g.overlapTracker.count()} Values:")
+    println("Part1: ${g.overlapTracker.count()} Values:")
+
+
+    source.map { parseLine(it) }.filter { !it.isStraight() }.also { it.forEach { println("Diagonal $it :: ${it.interpDiagonal()}") } }.forEach { line ->
+
+        line.interpDiagonal().also{ println("Diag: $it")}
+            .forEach { pt ->
+
+            g.fill(pt)
+        }
+
+//        println("===")
+//        g.print()
+
+    }
+
+
+    print("Part2: ${g.overlapTracker.count()} Values:")
 
 }
 
@@ -34,7 +51,7 @@ data class Grid(
         for (i in minX..maxX) {
             for (j in minY..maxY) {
                 if (i in m && j in m[i]!!) {
-                    print(m[i]!![j]!!)
+                    print("${m[i]!![j]!!}")
                 } else {
                     print(".")
                 }
@@ -49,20 +66,24 @@ data class Grid(
         minY = min(minY, pt.y)
         maxY = max(maxY, pt.y)
 
-        if (pt.x in m) {
-            if (pt.y in m[pt.x]!!) {
-                m[pt.x]!![pt.y] = m[pt.x]!![pt.y]!! + 1
+        if (pt.y in m) {
+            if (pt.x in m[pt.y]!!) {
+                m[pt.y]!![pt.x] = m[pt.y]!![pt.x]!! + 1
                 overlapTracker.add(pt)
             } else {
-                m[pt.x]!![pt.y] = 1
+                m[pt.y]!![pt.x] = 1
             }
         } else {
-            m[pt.x] = mutableMapOf(pt.y to 1)
+            m[pt.y] = mutableMapOf(pt.x to 1)
         }
     }
 
     fun fill(line: Line) {
         line.interpolatePoints().forEach { fill(it) }
+    }
+
+    fun fill(list: List<Point>) {
+        list.forEach { fill(it) }
     }
 
 }
@@ -80,6 +101,27 @@ data class Line(
         return (p1.x == p2.x) or (p1.y == p2.y)
     }
 
+    fun interpDiagonal(): List<Point> {
+        val acc = mutableListOf<Point>()
+        val x1 = p1.x
+        val x2 = p2.x
+
+        val y1 = p1.y
+        val y2 = p2.y
+
+        val dy = y2 - y1
+        val dx = x2 - x1
+
+        var p = Point(x1, y1)
+        acc.add(p)
+
+        while (acc.last() != Point(x2, y2)) {
+            p = Point(p.x + (1 * dx.sign), p.y + (1 * dy.sign))
+            acc.add(p)
+        }
+
+        return acc
+    }
     fun interpolatePoints(): List<Point> {
         val acc = mutableListOf<Point>()
         val x1 = min(p1.x, p2.x)
@@ -90,7 +132,7 @@ data class Line(
 
         for (i in x1..x2) {
             for (j in y1..y2) {
-                acc.add(Point(j, i))
+                acc.add(Point(i, j))
             }
         }
         return acc
