@@ -53,7 +53,6 @@ fun main() {
     val lowestPoints = mutableListOf<Element>()
     for (r in 0 until rows) {
         for (c in 0 until cols) {
-
             val isLowest = Element(r, c)
                 .reachableNeighbours(rows, cols)
                 .map { (ri, ci) -> mat[ri][ci] }
@@ -65,7 +64,6 @@ fun main() {
             mat[r][c]
         }
     }
-
     println("Part 1: ${lowestPoints.map { (r, c) -> mat[r][c] + 1 }.sum()}")
     println("Part 2: ${getBasins(lowestPoints, mat).map { it.size }.sortedDescending().slice(0..2).multiply()}")
 }
