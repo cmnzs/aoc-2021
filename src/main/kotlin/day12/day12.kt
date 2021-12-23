@@ -2,57 +2,52 @@ package day12
 
 import java.io.File
 
+
 fun main() {
-    val source = File("src/main/resources/day12.sample.txt").readLines().map { it.split("-") }
+    val source = File("src/main/resources/day12.txt").readLines().map { it.split("-") }.map { it.first() to it.last() }
         .also { println(it) }
-    val adjacencyMatrix = mutableMapOf<String, MutableMap<String, Int>>()
 
-    source.forEach { edge ->
-        val n1 = edge.first()
-        val n2 = edge.last()
+    val adjacencyList = (source.map { it.second to it.first  } + source).groupBy({it.first}, {it.second})
 
-        adjacencyMatrix.addEdge(n1, n2)
-    }
-
-    val paths = mutableListOf<MutableList<String>>()
-    val queue = ArrayDeque<String>()
-    val visited = mutableSetOf<String>()
-
-    fun neighbours(k: String): List<String> {
-        return if (k == "end") {
-            emptyList()
-        } else {
-            adjacencyMatrix[k]!!.keys.toList()
-        }
-    }
-
-    queue.add("start")
-
-    while (queue.isNotEmpty()) {
-        val s = queue.removeFirst()
-
-        val connected = adjacencyMatrix[s]!!.keys
-
-        paths.add(mutableListOf())
-    }
-
-
-    println(adjacencyMatrix)
+    val g = Graph(adjacencyList)
+    g.findPaths().onEach { println(it.joinToString(",")) }.also { println("NumPaths: ${it.count()}")}
 }
 
 
-fun MutableMap<String, MutableMap<String,Int>>.addEdge(k1: String, k2: String) {
-    if (k1 in this) {
-        this[k1]!![k2] = 1
-    } else {
-        this[k1] = mutableMapOf()
-        this[k1]!![k2] = 1
-    }
+class Graph(val adjacencyList: Map<String, List<String>>) {
 
-    if (k2 in this) {
-        this[k2]!![k1] = 1
-    } else {
-        this[k2] = mutableMapOf()
-        this[k2]!![k1] = 1
+    val start = "start"
+    val end = "end"
+
+    val pathList = mutableListOf<List<String>>()
+
+    fun findPaths(): MutableList<List<String>> {
+        val queue = ArrayDeque<List<String>>()
+        pathList.clear()
+
+        queue.add(listOf("start"))
+
+        while (queue.isNotEmpty()) {
+            val currentPath = queue.removeFirst()
+
+            if (currentPath.last() == end) {
+                pathList.add(currentPath)
+            } else {
+                val visited = currentPath.toList().filter { it.toUpperCase() != it }.groupBy( { it } ).mapValues { it.value.size }
+                println("visited $visited")
+                val connected = adjacencyList[currentPath.last()]!!
+
+                val validConnected = connected
+                .filterNot {
+                    it == start
+                }.filter {
+                        (it !in visited) || (it in visited && visited.none { it.value == 2 })
+                }
+
+                validConnected.map { currentPath + it }.forEach { queue.add(it) }
+
+            }
+        }
+        return pathList
     }
 }
